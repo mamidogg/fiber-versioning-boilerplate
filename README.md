@@ -26,9 +26,12 @@ Make sure you have the following installed outside the current project directory
 ### Project structure 📁
 ```
 api
+  ├── api.go
   ├── adapters
+  │  ├── mysql.go
   │  └── mongo.go
-  ├── app.go
+  ├── middlewares
+  │  └── middlewares.go
   ├── handlers
   │  ├── errors.go
   │  ├── parser_body.go
