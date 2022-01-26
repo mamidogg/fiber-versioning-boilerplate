@@ -1,17 +1,15 @@
-package main
+package api
 
 import (
+	"fmt"
 	"log"
 
-	adapters "github.com/aofdev/fiber-versioning-boilerplate/api/adapters"
+	"github.com/aofdev/fiber-versioning-boilerplate/api/adapters"
 	handlers "github.com/aofdev/fiber-versioning-boilerplate/api/handlers"
-	utilities "github.com/aofdev/fiber-versioning-boilerplate/api/utilities"
-	mediaRepoV1 "github.com/aofdev/fiber-versioning-boilerplate/api/versions/v1/repositories"
+	"github.com/aofdev/fiber-versioning-boilerplate/api/utilities"
+	"github.com/aofdev/fiber-versioning-boilerplate/api/versions/v1/repositories"
 	routesV1 "github.com/aofdev/fiber-versioning-boilerplate/api/versions/v1/routes"
-	mediaUsecaseV1 "github.com/aofdev/fiber-versioning-boilerplate/api/versions/v1/usecases"
-	mediaRepoV2 "github.com/aofdev/fiber-versioning-boilerplate/api/versions/v2/repositories"
-	routesV2 "github.com/aofdev/fiber-versioning-boilerplate/api/versions/v2/routes"
-	mediaUsecaseV2 "github.com/aofdev/fiber-versioning-boilerplate/api/versions/v2/usecases"
+	"github.com/aofdev/fiber-versioning-boilerplate/api/versions/v1/usecases"
 
 	_ "github.com/aofdev/fiber-versioning-boilerplate/docs"
 	swagger "github.com/arsmn/fiber-swagger/v2"
@@ -33,9 +31,17 @@ import (
 
 // @host localhost:3000
 // @BasePath /
-func main() {
+func StartServer() {
+	// Connect to the mysql database
+	mysqlAdapter := adapters.NewMysqlServer(adapters.ENV{
+		utilities.ViperEnvVariable("MYSQL_HOST"),
+		utilities.ViperEnvVariable("MYSQL_PORT"),
+		utilities.ViperEnvVariable("MYSQL_DATABASE_NAME"),
+		utilities.ViperEnvVariable("MYSQL_USERNAME"),
+		utilities.ViperEnvVariable("MYSQL_PASSWORD"),
+	})
 
-	// Connect to the database
+	// Connect to the mongo database
 	mongoAdapter := adapters.NewMongoAdapter(
 		utilities.ViperEnvVariable("MONGO_URI"),
 		utilities.ViperEnvVariable("MONGO_DATABASE"),
@@ -44,29 +50,29 @@ func main() {
 	defer mongoAdapter.CloseMongoAdapter()
 
 	// Initialize repository and usecase
-	initMediaRepoV1 := mediaRepoV1.NewMediaRepository(mongoAdapter)
-	initMediaUsecaseV1 := mediaUsecaseV1.NewMediaUsecase(initMediaRepoV1)
-	initMediaRepoV2 := mediaRepoV2.NewMediaRepository(mongoAdapter)
-	initMediaUsecaseV2 := mediaUsecaseV2.NewMediaUsecase(initMediaRepoV2)
+	initMediaRepoV1 := repositories.NewMediaRepository(mongoAdapter)
+	initMediaUsecaseV1 := usecases.NewMediaUsecase(initMediaRepoV1)
+
+	initUserRepoV1 := repositories.NewUserRepository(mysqlAdapter)
+	initUserUsecaseV1 := usecases.NewUserUsecase(initUserRepoV1)
 
 	// Initialize fiber
 	app := fiber.New(fiber.Config{
-		// Prefork:      true,
+		//Prefork:      true,
 		ErrorHandler: handlers.ErrorHandler,
 	})
 
 	app.Use(cors.New())
 	app.Use(recover.New())
+	app.Get("/docs/*", swagger.Handler)
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello fiber versioning boilerplate")
 	})
-	app.Get("/docs/*", swagger.Handler)
 
-	// API Group Versions
 	v1 := app.Group("/v1")
 	routesV1.MediaRouter(v1, initMediaUsecaseV1)
-	v2 := app.Group("/v2")
-	routesV2.MediaRouter(v2, initMediaUsecaseV2)
+	routesV1.UserRouter(v1, initUserUsecaseV1)
 
-	log.Fatal(app.Listen(":3000"))
+	port := fmt.Sprintf(":%s", utilities.ViperEnvVariable("APP_PORT"))
+	log.Fatal(app.Listen(port))
 }

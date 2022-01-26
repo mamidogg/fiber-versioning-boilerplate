@@ -24,7 +24,6 @@ func MediaRouter(app fiber.Router, mediaUsecase media.MediaUsecase) {
 func getMediaByID(mediaUsecase media.MediaUsecase) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		paramID := c.Params("id")
-
 		if paramID == "" {
 			return fiber.NewError(fiber.StatusUnprocessableEntity, "Invalid ID")
 		}

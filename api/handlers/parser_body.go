@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -48,6 +49,7 @@ func ParseBody(ctx *fiber.Ctx, body interface{}) *fiber.Error {
 // Its just a helper function to avoid writing if condition again n again.
 func ParseBodyAndValidate(ctx *fiber.Ctx, body interface{}) *fiber.Error {
 	if err := ParseBody(ctx, body); err != nil {
+		log.Println("--- ParseBody ---", err)
 		return err
 	}
 

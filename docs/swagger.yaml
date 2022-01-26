@@ -48,9 +48,31 @@ definitions:
           maxLength: 100
           minLength: 1
           type: string
+        maxItems: 100
+        minItems: 1
         type: array
     required:
     - ids
+    type: object
+  entities.ResponseGetAllUser:
+    properties:
+      data:
+        $ref: '#/definitions/entities.User'
+      status:
+        type: string
+    type: object
+  entities.User:
+    properties:
+      account_code:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
     type: object
   entities.metaPost:
     properties:
@@ -167,4 +189,36 @@ paths:
                   $ref: '#/definitions/entities.Post'
               type: object
       summary: object media
+  /v1/users:
+    get:
+      consumes:
+      - application/json
+      description: get object user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handlers.HTTPSuccess'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/entities.ResponseGetAllUser'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.HTTPError'
+      summary: Lists all user
 swagger: "2.0"

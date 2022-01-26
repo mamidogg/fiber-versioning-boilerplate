@@ -3,7 +3,7 @@
 PROJECTNAME := $(shell basename "$(PWD)")
 
 ## setup: Initialize project
-setup: copy-env docker-start mongo-restore
+setup: copy-env docker-start mongo-restore gendoc
 
 ## docker-start: Start docker-compose
 docker-start:
@@ -23,7 +23,7 @@ copy-env:
 
 ## gendoc: Generate docs api with swagger
 gendoc:
-	swag init -g api/app.go
+	swag init --parseDependency --parseInternal --parseDepth 1 -g api/api.go
 
 ## test: Run tests coverage
 test:
